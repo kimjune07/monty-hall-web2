@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>몬티홀 게임 (3문)</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f2f2f2; }
+    h1 { margin-bottom: 20px; }
+    #doors { display: flex; justify-content: center; gap: 10px; }
+    .door {
+      width: 80px; height: 120px;
+      background-image: url('door.png');
+      background-size: cover;
+      border: 3px solid black;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .disabled { pointer-events: none; opacity: 0.5; }
+    .goat { background-image: url('goat.png'); }
+    .car { background-image: url('car.png'); }
+    .green { border-color: green !important; }
+    .red { border-color: red !important; }
+    #status, #stats { margin-top: 20px; }
+  </style>
+  <audio id="bgm" src="game-music-loop.mp3" loop autoplay></audio>
+  <audio id="success-sound" src="success.mp3"></audio>
+  <audio id="fail-sound" src="fail.mp3"></audio>
+</head>
+<body>
+  <h1>🚪 몬티홀 게임 (3문)</h1>
+  <div id="status">3개의 문 중 하나를 선택하세요!</div>
+  <div id="doors"></div>
+  <div id="stats"></div>
+  <script>
+    const NUM_DOORS = 3;
+    let carDoor, playerChoice, revealedDoor, finalChoice;
+    let state = 'select';
+    let switchWins = 0, stayWins = 0, switchTrials = 0, stayTrials = 0;
+
+    const doorsContainer = document.getElementById('doors');
+    const statusDiv = document.getElementById('status');
+    const statsDiv = document.getElementById('stats');
+
+    function setupGame() {
+      doorsContainer.innerHTML = '';
+      state = 'select';
+      playerChoice = null;
+      revealedDoor = null;
+      finalChoice = null;
+      carDoor = Math.floor(Math.random() * NUM_DOORS);
+
+      for (let i = 0; i < NUM_DOORS; i++) {
+        const door = document.createElement('div');
+        door.classList.add('door');
+        door.dataset.index = i;
+        door.addEventListener('click', onClick);
+        doorsContainer.appendChild(door);
+      }
+
+      statusDiv.textContent = '3개의 문 중 하나를 선택하세요!';
+    }
+
+    function onClick(event) {
+      const index = parseInt(event.target.dataset.index);
+      if (state === 'select') {
+        playerChoice = index;
+        highlightChoice(index);
+        const others = [...Array(NUM_DOORS).keys()].filter(i => i !== index && i !== carDoor);
+        revealedDoor = others[Math.floor(Math.random() * others.length)];
+        revealGoat(revealedDoor);
+        const swap = confirm(`사회자가 문 ${revealedDoor}을 열었습니다 (염소🐐)\n선택을 바꾸시겠습니까?`);
+        if (swap) {
+          statusDiv.textContent = '바꿀 문을 클릭해서 선택하세요!';
+          state = 'switch';
+        } else {
+          finalChoice = playerChoice;
+          stayTrials++;
+          showResult(finalChoice === carDoor);
+        }
+      } else if (state === 'switch') {
+        if (index === playerChoice || index === revealedDoor) return;
+        finalChoice = index;
+        switchTrials++;
+        showResult(finalChoice === carDoor);
+      }
+    }
+
+    function highlightChoice(index) {
+      document.querySelectorAll('.door').forEach((d, i) => {
+        d.style.borderColor = i === index ? 'red' : 'black';
+      });
+    }
+
+    function revealGoat(index) {
+      const door = document.querySelector(`.door[data-index='${index}']`);
+      door.classList.add('goat', 'disabled');
+    }
+
+    function showResult(success) {
+      document.querySelectorAll('.door').forEach((door, i) => {
+        door.classList.add('disabled');
+        door.classList.remove('selected');
+        if (i === carDoor) door.classList.add('car');
+        else door.classList.add('goat');
+        if (i === finalChoice) {
+          door.classList.add(success ? 'green' : 'red');
+        }
+      });
+      document.getElementById(success ? 'success-sound' : 'fail-sound').play();
+      statusDiv.textContent = success
+        ? '🎉 축하합니다! 자동차🚗를 얻었습니다!'
+        : '😢 아쉽네요. 염소🐐를 선택했습니다!';
+      if (finalChoice !== playerChoice) switchWins += success ? 1 : 0;
+      else stayWins += success ? 1 : 0;
+      updateStats();
+      setTimeout(setupGame, 4000);
+    }
+
+    function updateStats() {
+      const total = switchTrials + stayTrials;
+      const switchRate = switchTrials ? (switchWins / switchTrials * 100).toFixed(1) : 0;
+      const stayRate = stayTrials ? (stayWins / stayTrials * 100).toFixed(1) : 0;
+      statsDiv.innerHTML = `
+        <hr>
+        ✅ 바꿔서 성공: ${switchWins}/${switchTrials} (${switchRate}%)<br>
+        ❎ 유지해서 성공: ${stayWins}/${stayTrials} (${stayRate}%)<br>
+        🔢 총 시도 횟수: ${total}
+      `;
+    }
+
+    setupGame();
+  </script>
+</body>
+</html>
