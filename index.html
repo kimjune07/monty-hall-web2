@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>몬티홀 게임 (3문)</title>
+  <title>몬티홀 게임 (10문)</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f2f2f2; }
     h1 { margin-bottom: 20px; }
-    #doors { display: flex; justify-content: center; gap: 10px; }
+    #doors { display: grid; grid-template-columns: repeat(5, 80px); grid-gap: 10px; justify-content: center; }
     .door {
       width: 80px; height: 120px;
       background-image: url('door.png');
@@ -21,19 +21,25 @@
     .car { background-image: url('car.png'); }
     .green { border-color: green !important; }
     .red { border-color: red !important; }
-    #status, #stats { margin-top: 20px; }
+    #status, #stats, #simulation { margin-top: 20px; }
+    input[type="number"] { width: 60px; padding: 5px; }
+    button { padding: 5px 10px; margin-left: 5px; }
   </style>
   <audio id="bgm" src="game-music-loop.mp3" loop autoplay></audio>
   <audio id="success-sound" src="success.mp3"></audio>
   <audio id="fail-sound" src="fail.mp3"></audio>
 </head>
 <body>
-  <h1>🚪 몬티홀 게임 (3문)</h1>
-  <div id="status">3개의 문 중 하나를 선택하세요!</div>
+  <h1>🚪 몬티홀 게임 (10문)</h1>
+  <div id="status">10개의 문 중 하나를 선택하세요!</div>
   <div id="doors"></div>
+  <div id="simulation">
+    <input type="number" id="sim-count" min="1" placeholder="횟수">
+    <button onclick="runSimulations()">자동 실행</button>
+  </div>
   <div id="stats"></div>
   <script>
-    const NUM_DOORS = 3;
+    const NUM_DOORS = 10;
     let carDoor, playerChoice, revealedDoor, finalChoice;
     let state = 'select';
     let switchWins = 0, stayWins = 0, switchTrials = 0, stayTrials = 0;
@@ -58,7 +64,7 @@
         doorsContainer.appendChild(door);
       }
 
-      statusDiv.textContent = '3개의 문 중 하나를 선택하세요!';
+      statusDiv.textContent = '10개의 문 중 하나를 선택하세요!';
     }
 
     function onClick(event) {
@@ -69,7 +75,8 @@
         const others = [...Array(NUM_DOORS).keys()].filter(i => i !== index && i !== carDoor);
         revealedDoor = others[Math.floor(Math.random() * others.length)];
         revealGoat(revealedDoor);
-        const swap = confirm(`사회자가 문 ${revealedDoor}을 열었습니다 (염소🐐)\n선택을 바꾸시겠습니까?`);
+        const swap = confirm(`사회자가 문 ${revealedDoor}을 열었습니다 (염소🐐)
+선택을 바꾸시겠습니까?`);
         if (swap) {
           statusDiv.textContent = '바꿀 문을 클릭해서 선택하세요!';
           state = 'switch';
@@ -127,6 +134,22 @@
         ❎ 유지해서 성공: ${stayWins}/${stayTrials} (${stayRate}%)<br>
         🔢 총 시도 횟수: ${total}
       `;
+    }
+
+    function runSimulations() {
+      const count = parseInt(document.getElementById('sim-count').value);
+      if (!count || count <= 0) return;
+      for (let i = 0; i < count; i++) {
+        const car = Math.floor(Math.random() * NUM_DOORS);
+        const pick = Math.floor(Math.random() * NUM_DOORS);
+        const remaining = [...Array(NUM_DOORS).keys()].filter(x => x !== pick && x !== car);
+        const revealed = remaining[Math.floor(Math.random() * remaining.length)];
+        const newChoice = [...Array(NUM_DOORS).keys()].find(x => x !== pick && x !== revealed);
+        const isWin = newChoice === car;
+        switchTrials++;
+        if (isWin) switchWins++;
+      }
+      updateStats();
     }
 
     setupGame();
