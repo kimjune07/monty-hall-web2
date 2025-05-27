@@ -31,7 +31,7 @@
 </head>
 <body>
   <h1>🚪 몬티홀 게임 (10문)</h1>
-  <div id="status">10개의 문 중 하나를 선택하세요!</div>
+  <div id="status">3개의 문 중 하나를 선택하세요!</div>
   <div id="doors"></div>
   <div id="simulation">
     <input type="number" id="sim-count" min="1" placeholder="횟수">
@@ -39,7 +39,7 @@
   </div>
   <div id="stats"></div>
   <script>
-    const NUM_DOORS = 10;
+    const NUM_DOORS = 3;
     let carDoor, playerChoice, revealedDoor, finalChoice;
     let state = 'select';
     let switchWins = 0, stayWins = 0, switchTrials = 0, stayTrials = 0;
@@ -64,7 +64,7 @@
         doorsContainer.appendChild(door);
       }
 
-      statusDiv.textContent = '10개의 문 중 하나를 선택하세요!';
+      statusDiv.textContent = '3개의 문 중 하나를 선택하세요!';
     }
 
     function onClick(event) {
